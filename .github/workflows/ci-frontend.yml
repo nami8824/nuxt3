@@ -41,7 +41,7 @@ jobs:
       - name: aws cli version
         run: aws --version
       - name: zip
-        run: zip -rq output.zip ./output
+        run: zip -r output.zip ./.output
       - name: upload
         run: aws s3 cp output.zip s3://deploy-nuxt
       - name: deploy
