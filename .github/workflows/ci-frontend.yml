@@ -1,0 +1,48 @@
+name: CI Backend
+
+on:
+  push:
+jobs:
+  ci-backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: OS Version
+        run: cat /etc/os-release
+      - name: Setup Node
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+      - name: node, npm, yarn Version,
+        run: |
+          node --version
+          npm --version
+          yarn --version
+      - name: Cache vendor
+        uses: actions/cache@v3
+        id: cache
+        with:
+          path: ./.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: ${{ runner.os }}-node-
+      - name: Yarn Install
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: yarn
+      - name: Yarn Build
+        run: yarn build
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1
+      - name: aws cli version
+        run: aws --version
+      - name: zip
+        run: zip -rq output.zip ./output
+      - name: upload
+        run: aws s3 cp output.zip s3://deploy-nuxt
+      - name: deploy
+        run: aws deploy create-deployment --application-name "deploy" --deployment-group-name "deploy-group" --s3-location bucket=deploy-nuxt,key=output.zip,bundleType=zip
