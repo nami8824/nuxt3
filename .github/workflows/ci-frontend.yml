@@ -32,6 +32,8 @@ jobs:
         run: yarn
       - name: Yarn Build
         run: yarn build
+      - name: mv appspec
+        run: mv ./appspec.yml ./output
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
